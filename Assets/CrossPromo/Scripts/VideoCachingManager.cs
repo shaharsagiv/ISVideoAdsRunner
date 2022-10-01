@@ -6,7 +6,7 @@ using System;
 
 namespace CrossPromo
 {
-    public class VideoCachingManager : MonoBehaviour
+    public class VideoCachingManager
     {
         public void CacheVideosFromUrl(string url, Action<List<VideoItem>> onSuccess)
         {

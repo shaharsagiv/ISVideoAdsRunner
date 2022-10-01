@@ -71,6 +71,7 @@ namespace CrossPromo
         {
             FileStream fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write);
             fileStream.Write(data, 0, data.Length);
+            fileStream.Close();
         }
 
         
