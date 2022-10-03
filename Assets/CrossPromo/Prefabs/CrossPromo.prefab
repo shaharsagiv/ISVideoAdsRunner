@@ -292,7 +292,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25e1abd797b763a4197cd29fb34e3334, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerId: Inser yout playet id
+  playerId: Inser yout player id
   controller: {fileID: 1088026374908204277}
 --- !u!223 &6301543040587487159
 Canvas:

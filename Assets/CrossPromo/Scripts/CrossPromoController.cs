@@ -31,6 +31,11 @@ namespace CrossPromo.Scripts
             }
         }
 
+        public void SetPlayerId(string playerId)
+        {
+            _playerId = playerId;
+        }
+        
         public void Next()
         {
             if(_videoItemsList != null && videoPlayer != null)

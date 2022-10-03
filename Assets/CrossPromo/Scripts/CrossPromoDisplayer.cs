@@ -12,6 +12,11 @@ namespace CrossPromo
         private CrossPromoController controller;
 
 
+        public void SetPlayerId(string id)
+        {
+            controller.SetPlayerId(id);
+        }
+        
         public void Next()
         {
             if (controller != null)

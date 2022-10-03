@@ -72,9 +72,21 @@ namespace CrossPromo
             }
 
             LocalUrl = Path.Combine(directory, fileName);
-            WriteByteArrayToFile(LocalUrl, video);
+            
 
-            _onDownloadSuccess?.Invoke();
+            
+            
+            try
+            {
+                WriteByteArrayToFile(LocalUrl, video);
+                _onDownloadSuccess?.Invoke();
+            }
+    
+            catch (Exception)
+            {
+                Debug.LogError("Error saving video id: " + _response.id + "continue to next video");
+                _onDownloadFailed?.Invoke(_response.id);
+            }
         }
 
         private void OnError(string message)
