@@ -1,39 +1,42 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System;
 
 
-namespace CrossPromo
+namespace CrossPromo.Scripts
 {
-    public class VideoCachingManager
+    public static class VideoCachingManager
     {
-        public void CacheVideosFromUrl(string url, Action<List<VideoItem>> onSuccess)
+        public static void CacheVideosFromUrl(string url, Action<List<VideoItem>> onSuccess)
         {
-            List<VideoItem> chachedVideoItemsList;
-            int downloadedVideoCount = 0;
+            List<VideoItem> cachedVideoItemsList;
+            int videoIndex = 0;
+            VideoAdsListResponse videoAdsList;
 
             WebRequests.Get(WebRequestType.Text, url, OnError, TextDownloaded);
 
             void TextDownloaded(string text)
             {
                 Debug.Log("===>>> Success got text response: " + text);
-
-                VideoAdsListResponse videoAdsList = JsonHelper.FromJson<VideoAdsListResponse>(text);
-
+                videoAdsList = JsonUtility.FromJson<VideoAdsListResponse>(text);
+                
+                
                 if (videoAdsList.results != null)
                 {
-                    Debug.Log("===>>> Parse Json to VideoAdsListResponse Success. number of ads:  " + videoAdsList.results.Length);
+                    Debug.Log("===>>> Parse Json to VideoAdsListResponse Success. number of ads:  " 
+                              + videoAdsList.results.Length);
 
                     int adsAmount = videoAdsList.results.Length;
 
-                    chachedVideoItemsList = new List<VideoItem>();
+                    cachedVideoItemsList = new List<VideoItem>();
 
-                    for (int i = 0; i < adsAmount; i++)
+                    if (videoIndex < adsAmount)
                     {
-                        VideoItem videoItem = new VideoItem(videoAdsList.results[i], OnVideoDownloadComplete, OnVideoDownloadFailed);
-                        chachedVideoItemsList.Add(videoItem);
+                        var videoItem = new VideoItem(videoAdsList.results[videoIndex], 
+                            OnVideoDownloadComplete, OnVideoDownloadFailed);
+                        cachedVideoItemsList.Add(videoItem);
                     }
+
                 }
                 else
                 {
@@ -44,35 +47,30 @@ namespace CrossPromo
 
             void OnVideoDownloadComplete()
             {
-                downloadedVideoCount++;
+                videoIndex++;
 
-                if (downloadedVideoCount == chachedVideoItemsList.Count)
+                onSuccess?.Invoke(cachedVideoItemsList);
+
+                if (videoIndex < videoAdsList.results.Length)
                 {
-                    if(onSuccess != null)
-                    {
-                       onSuccess(chachedVideoItemsList);
-                    }   
+                    var videoItem = new VideoItem(videoAdsList.results[videoIndex], 
+                        OnVideoDownloadComplete, OnVideoDownloadFailed);
+                    cachedVideoItemsList.Add(videoItem);
                 }
             }
 
             void OnVideoDownloadFailed(int id)
             {
-                chachedVideoItemsList.RemoveAll(videoItem => videoItem.Id == id);
-
-                if (downloadedVideoCount == chachedVideoItemsList.Count)
-                {
-                    if (onSuccess != null)
-                    {
-                        onSuccess(chachedVideoItemsList);
-                    }
-                }
+                cachedVideoItemsList.RemoveAll(videoItem => videoItem.Id == id);
+                var videoItem = new VideoItem(videoAdsList.results[videoIndex], 
+                    OnVideoDownloadComplete, OnVideoDownloadFailed);
+                cachedVideoItemsList.Add(videoItem);
             }
 
             void OnError(string message)
             {
                 Debug.LogError("===>>> Error getting video ads data  " + message);
             }
-
         }
     }
 }

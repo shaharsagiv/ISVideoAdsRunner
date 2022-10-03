@@ -1,33 +1,41 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Video;
 
 
-namespace CrossPromo
+namespace CrossPromo.Scripts
 {
     public class CrossPromoController : MonoBehaviour
     {
-        const string URL = "https://run.mocky.io/v3/082a08da-9c8e-49f9-afc9-0a154728fc17";
+        private const string URL = "https://run.mocky.io/v3/082a08da-9c8e-49f9-afc9-0a154728fc17";
 
-        List<VideoItem> _videoItemsList;
-        int _videoIndex = 0;
+        [SerializeField]
+        private VideoPlayer videoPlayer;
+        
+        private List<VideoItem> _videoItemsList;
+        private int _videoIndex = 0;
+        private string _playerId;
 
-        public VideoPlayer videoPlayer;
-
-        // Start is called before the first frame update
-        public void DownloadAndPlayVideos(CrossPromoSettings settings)
+        public void DownloadAndPlayVideos(string playerId)
         {
-            var videoCachigManager = new VideoCachingManager();
-            videoCachigManager.CacheVideosFromUrl(URL, OnVideosDownloaded);
-            videoPlayer.loopPointReached -= LoopPointReached;
-            videoPlayer.loopPointReached += LoopPointReached;
+            if (videoPlayer != null)
+            {
+                VideoCachingManager.CacheVideosFromUrl(URL, OnVideosDownloaded);
+                videoPlayer.loopPointReached -= LoopPointReached;
+                videoPlayer.loopPointReached += LoopPointReached;
+                _playerId = playerId;
+            }
+            else
+            {
+                Debug.LogError("CrossPromoController videoPlayer is unassigned!");
+            }
         }
 
         public void Next()
         {
-            if(_videoItemsList != null)
+            if(_videoItemsList != null && videoPlayer != null)
             {
+                videoPlayer.Stop();
                 _videoIndex = (_videoIndex + 1) % _videoItemsList.Count;
                 PlayVideo(_videoItemsList[_videoIndex].LocalUrl);
             }
@@ -35,8 +43,9 @@ namespace CrossPromo
 
         public void Previous()
         {
-            if (_videoItemsList != null)
+            if (_videoItemsList != null && videoPlayer != null)
             {
+                videoPlayer.Stop();
                 _videoIndex = (_videoItemsList.Count + _videoIndex + -1) % _videoItemsList.Count;
                 PlayVideo(_videoItemsList[_videoIndex].LocalUrl);
             }
@@ -58,19 +67,22 @@ namespace CrossPromo
             }
         }
 
+        public void OnButtonClick()
+        {
+            _videoItemsList?[_videoIndex].OnButtonClick(_playerId);
+        }
+        
 
         private void OnVideosDownloaded(List<VideoItem> videoItemsList)
         {
+            _videoItemsList = videoItemsList;
             if(videoItemsList != null)
             {
-                _videoItemsList = videoItemsList;
-                Debug.Log("======>>>>> WOW");
-
                 PlayVideo(_videoItemsList[_videoIndex].LocalUrl);
             }
         }
-
-        void OnDestroy()
+        
+        private void OnDestroy()
         {
             foreach(VideoItem videoItem in _videoItemsList)
             {
@@ -78,15 +90,15 @@ namespace CrossPromo
             }
         }
 
-        void LoopPointReached(VideoPlayer videoPlayer)
+        private void LoopPointReached(VideoPlayer player)
         {
             Next();
         }
 
 
-        void PlayVideo(string url)
+        private void PlayVideo(string url)
         {
-            if(videoPlayer != null)
+            if(videoPlayer != null && !videoPlayer.isPlaying && !videoPlayer.isPaused)
             {
                 videoPlayer.url = url;
                 videoPlayer.source = VideoSource.Url;

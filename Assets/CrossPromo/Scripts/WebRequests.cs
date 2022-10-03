@@ -1,28 +1,28 @@
 using System;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Video;
 
-namespace CrossPromo
+namespace CrossPromo.Scripts
 {
     public enum WebRequestType
     {
         Text = 1,
         Texture = 2,
-        Video = 3
+        Video = 3,
+        Tracking = 4
     }
 
-    public class WebRequests
+    public static class WebRequests
     {
         public static async void Get(WebRequestType requestType,
             string url, Action<string> onError, Action<string> onSuccessText = null,
-            Action<Texture2D> onSuccessTexture = null, Action<byte[]> onSuccessVideo = null)
+            Action<Texture2D> onSuccessTexture = null, Action<byte[]> onSuccessVideo = null,
+            Action onSuccessTracking = null)
         {
-            if (onSuccessText == null && onSuccessTexture == null && onSuccessVideo == null)
+            if (onSuccessText == null && onSuccessTexture == null && onSuccessVideo == null && onSuccessTracking == null)
             {
-                Debug.LogError($" must assign at least one of the optional success delegates");
+                Debug.LogError($"WebRequests.Get() must assign at least one of the optional success delegates");
             }
 
             switch (requestType)
@@ -32,7 +32,8 @@ namespace CrossPromo
                     {
                         await ProcessRequest(requestType, unityWebRequest);
 
-                        if (unityWebRequest.isHttpError || unityWebRequest.isNetworkError)
+                        if (unityWebRequest.result == UnityWebRequest.Result.ProtocolError ||
+                            unityWebRequest.result == UnityWebRequest.Result.ConnectionError)
                         {
                             onError(unityWebRequest.error);
                         }
@@ -47,15 +48,18 @@ namespace CrossPromo
                     using (UnityWebRequest unityWebRequest = UnityWebRequestTexture.GetTexture(url))
                     {
                         await ProcessRequest(requestType, unityWebRequest);
-                        if (unityWebRequest.isHttpError || unityWebRequest.isNetworkError)
+                        if (unityWebRequest.result == UnityWebRequest.Result.ProtocolError ||
+                            unityWebRequest.result == UnityWebRequest.Result.ConnectionError)
                         {
                             onError(unityWebRequest.error);
                         }
                         else
                         {
-                            DownloadHandlerTexture downloadHandlerTexture =
-                                unityWebRequest.downloadHandler as DownloadHandlerTexture;
-                            onSuccessTexture?.Invoke(downloadHandlerTexture.texture);
+                            if (unityWebRequest.downloadHandler is DownloadHandlerTexture downloadHandlerTexture)
+                            {
+                                onSuccessTexture?.Invoke(downloadHandlerTexture.texture);
+                            }
+                                
                         }
                         break;
                     }
@@ -65,13 +69,31 @@ namespace CrossPromo
                     using (UnityWebRequest unityWebRequest = UnityWebRequestTexture.GetTexture(url))
                     { 
                         await ProcessRequest(requestType, unityWebRequest);
-                        if (unityWebRequest.isHttpError || unityWebRequest.isNetworkError)
+                        if (unityWebRequest.result == UnityWebRequest.Result.ProtocolError ||
+                            unityWebRequest.result == UnityWebRequest.Result.ConnectionError)
                         {
                             onError(unityWebRequest.error);
                         }
                         else
                         {
                             onSuccessVideo?.Invoke(unityWebRequest.downloadHandler.data);
+                        }
+                    }
+                    break;
+                }
+                case WebRequestType.Tracking:
+                {
+                    using (UnityWebRequest unityWebRequest = UnityWebRequest.Get(url))
+                    { 
+                        await ProcessRequest(requestType, unityWebRequest);
+                        if (unityWebRequest.result == UnityWebRequest.Result.ProtocolError ||
+                            unityWebRequest.result == UnityWebRequest.Result.ConnectionError)
+                        {
+                            onError(unityWebRequest.error);
+                        }
+                        else
+                        {
+                            onSuccessTracking?.Invoke();
                         }
                     }
                     break;

@@ -1,46 +1,61 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using CrossPromo;
-using System;
+﻿using UnityEngine;
+using CrossPromo.Scripts;
 
-public class CrossPromoDisplayer : MonoBehaviour
+namespace CrossPromo
 {
-    public string PlayerId;
-    public Vector2 VideoDimentions;
-    public bool ShowDownloadIndicator;
-    public CrossPromoController Controller;
-
-
-    public void Next()
+    public class CrossPromoDisplayer : MonoBehaviour
     {
-
-    }
-
-    public void Previous()
-    {
-
-    }
-
-    public void Pause()
-    {
-
-    }
-
-    public void Resume()
-    {
-
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        var settings = new CrossPromoSettings(VideoDimentions, ShowDownloadIndicator, PlayerId);
-        if(Controller != null)
-        {
-            Controller.DownloadAndPlayVideos(settings);
-        }
+        [SerializeField]
+        private string playerId;
         
-    }
+        [SerializeField]
+        private CrossPromoController controller;
 
+
+        public void Next()
+        {
+            if (controller != null)
+            {
+                controller.Next();
+            }
+        }
+
+        public void Previous()
+        {
+            if (controller != null)
+            {
+                controller.Previous();
+            }
+        }
+
+        public void Pause()
+        {
+            if (controller != null)
+            {
+                controller.Pause();
+            }
+        }
+
+        public void Resume()
+        {
+            if (controller != null)
+            {
+                controller.Resume();
+            }
+        }
+
+        // Start is called before the first frame update
+        private void Start()
+        {
+            if (controller != null)
+            {
+                controller.DownloadAndPlayVideos(playerId);
+            }
+            else
+            {
+                Debug.LogError("CrossPromoDisplayer controller unassigned reference");
+            }
+        }
+
+    }
 }
